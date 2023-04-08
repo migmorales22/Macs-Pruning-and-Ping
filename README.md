@@ -8,12 +8,12 @@ Afterward, the script prompts the user to provide the IP address of the destinat
 
 * Enter the IP address of the source device.
 * Enter the interface connected to the MAC addresses you want to retrieve.
-* The script will display the number of MAC addresses found on the specified interface(s).
+* The script will display the number of MAC addresses found on the specified interface.
 * Enter the IP address of the destination device to retrieve the associated IP addresses and VRFs.
 
 ```js
 Please write the IP of the source device: 10.72.180.97
-Please enter the interface to retrieve MAC addresses for (or leave empty to retrieve for all interfaces): 50|100GE8/1/0
+Please enter the interface to retrieve MAC addresses: 50|100GE8/1/0
 Found 648 MAC addresses
 Please write the IP of the destination device: 10.87.190.22
 ```
