@@ -190,6 +190,6 @@ save
 ```
 ## Requirements
 
-* jinja2
-* contextlib
-* Python 3.9 =>
+* netmiko==4.1.2
+* re
+* Python 3.11 =>
