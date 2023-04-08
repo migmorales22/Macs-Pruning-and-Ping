@@ -4,12 +4,12 @@ This script automates the process of connecting to two Huawei devices. Firstly, 
 
 Afterward, the script prompts the user to provide the IP address of the destination device. It connects to this device via SSH and retrieves the dynamic ARP entries that correspond to the previously extracted MAC addresses. The script then extracts the IP addresses and VRF for each MAC address and saves the corresponding ping commands to a file named 'pings.txt'. To prevent duplication, the script checks the file for existing ping commands before adding new ones.
 
-**Note:** Here is a revised version of the final inputs prompt:
+**Note:** Here's an example of how the script would look when running it in the terminal:
 
 * Enter the IP address of the source device.
-* Enter the interface connected to the MAC addresses you want to retrieve. If you leave this field blank, the script will retrieve MAC addresses for all interfaces.
+* Enter the interface connected to the MAC addresses you want to retrieve.
 * The script will display the number of MAC addresses found on the specified interface(s).
-* Enter the IP address of the destination device to retrieve the associated IP addresses and VPN instances.
+* Enter the IP address of the destination device to retrieve the associated IP addresses and VRFs.
 
 ```js
 Please write the IP of the source device: 10.72.180.97
@@ -17,10 +17,11 @@ Please enter the interface to retrieve MAC addresses for (or leave empty to retr
 Found 648 MAC addresses
 Please write the IP of the destination device: 10.87.190.22
 ```
+Ping commands saved to pings.txt.
 
-**Note:**  The script will prompt you for the source and destination device, also for the specified interface of the source device:
+## Walkthrough:
 
-**Note:** Please write your username and password for the devices 1 and 2:
+First write your username and password for the devices 1 and 2:
 ```js
 device1 = {
     'device_type': 'huawei',
@@ -31,9 +32,6 @@ device1 = {
 }
 ```
 ```js
-interface = input("Please provide the interface for the source device: ")
-```
-```js
 device2 = {
     'device_type': 'huawei',
     'ip': input("Please write the IP of the destination device: "),
@@ -42,22 +40,91 @@ device2 = {
     'session_log': 'ssh_device2.log',
 }
 ```
-Once you have entered all the information, the script will generate a router configuration using Jinja2 templates in a .txt file, which you can then use this configuration to set up eBGP on your router, or even send this info directly to your router.
-To change the .txt file just rename it in here:
+Know the links you want to retrive the MACs, and the specific interfaces:
 ```js
-with open('BGP-PEER-CONFIG-XXX.txt', 'a') as f: #save the output in a txt file
-        with redirect_stdout(f):
-            print(output)
+interface = input("Please enter the interface to retrieve MAC addresses for (or leave empty to retrieve for all interfaces): ")
 ```
 
-If you want to customize the eBGP template, you can edit the template file 'bgp_huawei_template.j2' before running the script. 
+We define the commands to sent to the first device, which will be:
+```js
+commands1 = [
+    'screen-length 0 temporary',
+    f'display Mac-address dynamic interface {interface}',
+]
+```
+We set the first SSH connection, and save the MAC addresses extracted in a set().
+```js
+# Open an SSH connection to the first Huawei device
+with ConnectHandler(**device1) as ssh1:
 
-## Output
+    # Execute the first two commands and capture the output
+    for command in commands1:
+        output = ssh1.send_command(command)
 
-The output for the script that ran in the first note:
+    # Extract the MAC addresses with the format of XXXX-XXXX-XXXX
+    mac_addresses = set()
+    mac_count = 0
+    for line in output.split('\n'):
+        if '-' in line:
+            mac = line.split()[0]
+            if len(mac) == 14 and mac.count('-') == 2:
+                mac_addresses.add(mac)
+                mac_count += 1
 
+    print(f"Found {mac_count} MAC addresses"
+```
+Then the second SSH connection, which sent every MAC extracted in the command (display arp dynnamic | inc {mac}), and parse the output to extract the IP and VRF associated.
+```js
+# Open an SSH connection to the second Huawei device
+with ConnectHandler(**device2) as ssh2:
+    max_length = ssh2.send_command('screen-length 0 temporary')
 
-## Requirements
+    # Execute the commands and capture the output
+    for mac in mac_addresses:
+        command = f'display arp dynamic | inc {mac}'
+        output = ssh2.send_command(command , read_timeout=120)
+
+        # Save the output to a file
+        with open('output.txt', 'a+') as f:
+            f.write("\n")
+            f.write(output)
+            f.seek(0)
+            output = f.read()
+
+        # Extract the IP addresses and VPN instances for all MAC addresses
+        matches = re.findall(r'^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*?\s+(\S+)\s*$', output, flags=re.MULTILINE)
+
+        # Print the results
+        for match in matches:
+            ip = match[0]
+            vpn_instance = match[1]
+            ping_command = f"ping -vpn-instance {vpn_instance} {ip}"
+
+            # Check if the ping command already exists in the file
+            with open('pings.txt', 'a+') as s:
+                s.seek(0)
+                if ping_command in s.read():
+                    continue  # Skip this ping if it already exists in the file
+
+                # Save the ping command to the file
+                s.write(ping_command + '\n')
+```
+
+After that, the script saves the pings like this: ping -vpn-instance {vpn_instance} {ip}
+
+## Pings:
+
+**Note:** The pings.txt will have the commands ready to put on a excel for validation at the time of the maintenance window:
+```js
+ping -vpn-instance DSL_ACCESO 10.102.10.69
+ping -vpn-instance INTERNET_GT_DEPTAL 10.82.216.33
+ping -vpn-instance WALMART_INTERNET 10.174.187.103
+ping -vpn-instance IP_PBX_ACCESO 10.72.249.228
+ping -vpn-instance COOPEASRURAL 10.78.156.115
+ping -vpn-instance DSL_ACCESO 10.102.133.69
+```
+
+## Requirements:
 
 * netmiko==4.1.2
 * re
