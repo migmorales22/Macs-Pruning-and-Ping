@@ -10,7 +10,7 @@ device1 = {
     'session_log': 'ssh_device1.log',
 }
 
-interface = input("Please enter the interface to retrieve MAC addresses for (or leave empty to retrieve for all interfaces): ")
+interface = input("Please enter the interface to retrieve MAC addresses: ")
 
 # Define the commands to execute on the first device
 commands1 = [
