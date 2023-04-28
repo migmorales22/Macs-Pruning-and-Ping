@@ -1,4 +1,4 @@
-# macs-pruning-and-ping
+# Macs-Pruning-and-Ping
 
 This script automates the process of connecting to two Huawei devices. Firstly, it prompts the user to provide the IP address and interface of the source device. Then, it establishes an SSH connection to the device and retrieves the MAC addresses associated with the specified interface. The script filters out the MAC addresses with the correct format of XXXX-XXXX-XXXX and eliminates duplicates, saving them in a set for further use.
 
