@@ -1,8 +1,6 @@
 # Macs-Pruning-and-Ping
 
-This script automates the process of connecting to two Huawei devices. Firstly, it prompts the user to provide the IP address and interface of the source device. Then, it establishes an SSH connection to the device and retrieves the MAC addresses associated with the specified interface. The script filters out the MAC addresses with the correct format of XXXX-XXXX-XXXX and eliminates duplicates, saving them in a set for further use.
-
-Afterward, the script prompts the user to provide the IP address of the destination device. It connects to this device via SSH and retrieves the dynamic ARP entries that correspond to the previously extracted MAC addresses. The script then extracts the IP addresses and VRF for each MAC address and saves the corresponding ping commands to a file named 'pings.txt'. To prevent duplication, the script checks the file for existing ping commands before adding new ones.
+This script retrieves the MAC addresses from one Huawei device connected to a specific interface and uses them to retrieve the IP addresses and VPN instances from another Huawei device. It then saves the ping commands for each IP address and VPN instance to a file. The script uses Netmiko to establish SSH connections with the Huawei devices and executes specific commands to retrieve the necessary information. Users need to provide the device IP addresses, credentials, and interface information as inputs to the script.
 
 **Note:** Here's an example of how the script would look when running it in the terminal:
 
